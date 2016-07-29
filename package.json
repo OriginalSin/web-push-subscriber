@@ -1,5 +1,6 @@
 {
   "name": "web-push-subscriber",
+  "version": "0.1.0",
   "dependencies": {
     "level": "^1.4.0",
     "mydb": "^3.2.0",
