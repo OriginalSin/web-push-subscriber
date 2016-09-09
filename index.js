@@ -20,7 +20,9 @@ function isKnownProvider( provider ) {
  * @param [{String}] feature name for the worker being pushed to, when used stale subscriptions will be removed
  */
 function ping( provider, ids, feature ) {
-	var i, endpoint,
+	var i, endpoint, pingedIds, noop,
+		requests = 0,
+		pinged = 0,
 		body = {},
 		headers = {
 			'TTL': 60,
@@ -29,6 +31,10 @@ function ping( provider, ids, feature ) {
 
 	// Assume google if not given
 	provider = provider || 'google';
+	if ( provider.indexOf( 'test-' ) === 0 ) {
+		provider = provider.substr(5);
+		noop = true;
+	}
 
 	function doUnsubscriptions ( data ) {
 		if ( feature && data.unsubscribe ) {
@@ -43,19 +49,29 @@ function ping( provider, ids, feature ) {
 		headers.Authorization = "key=" + process.env.GCM_API_KEY;
 		// send them 50 at a time
 		for( i = 0; i < ids.length; i = i + 50 ) {
+			pingedIds = ids.slice(i, 50);
 			body = JSON.stringify( {
-				"registration_ids": ids.slice(i, 50)
+				"registration_ids": pingedIds
 			} );
-			pingEndpoint( endpoint, headers, body, ids.slice(i, 50) ).then( doUnsubscriptions );
+			if ( !noop ) {
+				pingEndpoint( endpoint, headers, body, pingedIds ).then( doUnsubscriptions );
+			}
+			pinged += pingedIds.length;
+			requests += 1;
 		}
 	} else if ( provider === 'firefox' ) {
 		for( i = 0; i < ids.length; i++ ) {
 			endpoint = 'https://updates.push.services.mozilla.com/push/' + ids[i];
-			pingEndpoint( endpoint, headers, null, [ ids[i] ] ).then( doUnsubscriptions );
+			if ( !noop ) {
+				pingEndpoint( endpoint, headers, null, [ ids[i] ] ).then( doUnsubscriptions );
+			}
+			requests += 1;
+			pinged += 1;
 		}
 	} else {
 		throw 'Endpoint is unknown: ' + provider;
 	}
+	return [ requests, pinged ];
 }
 
 /**
