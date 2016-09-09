@@ -34,9 +34,9 @@ function ping( provider, ids, feature ) {
 		if ( feature && data.unsubscribe ) {
 			data.unsubscribe.forEach( function ( subscription ) {
 				unsubscribe( provider, feature, subscription );
-			} )
+			} );
 		}
-	};
+	}
 
 	if ( provider === 'google' ) {
 		endpoint = 'https://android.googleapis.com/gcm/send';

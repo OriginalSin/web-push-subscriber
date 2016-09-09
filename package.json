@@ -1,9 +1,16 @@
 {
   "name": "web-push-subscriber",
+  "scripts": {
+    "test": "grunt test"
+  },
   "version": "0.1.0",
   "dependencies": {
     "level": "^1.4.0",
     "mydb": "^3.2.0",
     "node-fetch": "^1.5.3"
+  },
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-jshint": "^1.0.0"
   }
 }
