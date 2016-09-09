@@ -135,22 +135,47 @@ function broadcastForEndpoint( feature, provider ) {
 		prefix = provider + '!';
 	}
 
-	db.createReadStream( {
-			gt: prefix + feature + '!',
-			 // stop at the last key with the prefix
-			lt: prefix + feature + '\xFF'
-		} ).on( 'data', function ( data ) {
-			var id = data.key.split( '!' )[ index ];
-			if ( !id ) {
-				// bad data so cleanup
-				db.del( data.key );
-			}
-			ids.push( id );
-		} ).on( 'end', function () {
-			ping( provider, ids, feature );
-			console.log( 'web-push-subscriber pinged ' + ids.length + ' subscribers' );
-		} );
+	getSubscribers( feature, provider ).then( function ( ids ) {
+		ping( provider, ids, feature );
+		console.log( 'web-push-subscriber pinged ' + ids.length + ' subscribers' );
+	} );
 }
+
+/**
+ * For a given feature get the subscribers
+ *
+ * @param {String} feature
+ * @param {String} provider
+ */
+function getSubscribers( feature, provider ) {
+	var prefix,
+		index = 3,
+		ids = [];
+
+	// provider may be absent for backwards compatibility reasons
+	if ( provider ) {
+		index = 2;
+		prefix = provider + '!';
+	}
+
+	return new Promise( function ( resolve ) {
+		db.createReadStream( {
+				gt: prefix + feature + '!',
+				 // stop at the last key with the prefix
+				lt: prefix + feature + '\xFF'
+			} ).on( 'data', function ( data ) {
+				var id = data.key.split( '!' )[ index ];
+				if ( !id ) {
+					// bad data so cleanup
+					db.del( data.key );
+				}
+				ids.push( id );
+			} ).on( 'end', function () {
+				resolve( ids );
+			} );
+	} );
+}
+
 
 /**
  * Broadcast to all subscribers that a current feature has had updates
@@ -195,6 +220,7 @@ function unsubscribe( provider, feature, id, errhandler ) {
 }
 
 module.exports = {
+	getSubscribers: getSubscribers,
 	subscribe: subscribe,
 	unsubscribe: unsubscribe,
 	ping: ping,

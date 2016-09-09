@@ -15,3 +15,55 @@ describe('ping', function() {
   });
 });
 
+describe('subscribe', function() {
+  var result, result2;
+  subscriber.subscribe( 'google', 'feature', '0' );
+  subscriber.subscribe( 'google', 'another-feature', '1' );
+  subscriber.subscribe( 'firefox', 'feature', '2' );
+  subscriber.subscribe( 'firefox', 'feature', '3' );
+
+  beforeEach(function(done){
+    subscriber.getSubscribers( 'feature', 'google' ).then( function ( res ) {
+      result = res;
+      done();
+    } );
+  });
+
+  beforeEach(function(done){
+    subscriber.getSubscribers( 'feature', 'firefox' ).then( function ( res ) {
+      result2 = res;
+      done();
+    } );
+  });
+
+  it('only returns ids of the browser and feature asked for', function() {
+    assert.ok( result.length, 1, 'One subscriber.' );
+    assert.ok( result[0], '0', 'with token 0' );
+  });
+
+  it('gives me all tokens subscribed for firefox browser', function() {
+    assert.ok( result2.length, 2, 'Two subscribers.' );
+    assert.ok( result2[0], '2' );
+    assert.ok( result2[1], '3' );
+  });
+});
+
+describe('unsubscribe', function() {
+  var result;
+
+  subscriber.subscribe( 'google', 'feature-2', '0' );
+  subscriber.subscribe( 'google', 'feature-2', '1' );
+  subscriber.unsubscribe( 'google', 'feature-2', '0' );
+
+  beforeEach(function(done){
+    subscriber.getSubscribers( 'feature-2', 'google' ).then( function ( res ) {
+      result = res;
+      done();
+    } );
+  });
+
+  it('respects my unsubscription', function() {
+    assert.ok( result.length, 1 );
+    assert.ok( result[0], '1' );
+  });
+});
