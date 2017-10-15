@@ -61,7 +61,7 @@ function ping( provider, ids, feature ) {
 		}
 	} else if ( provider === 'firefox' ) {
 		for( i = 0; i < ids.length; i++ ) {
-			endpoint = 'https://updates.push.services.mozilla.com/push/' + ids[i];
+			endpoint = 'https://updates.push.services.mozilla.com/wpush/v1/' + ids[i];
 			if ( !noop ) {
 				pingEndpoint( endpoint, headers, null, [ ids[i] ] ).then( doUnsubscriptions );
 			}
@@ -95,9 +95,11 @@ function pingEndpoint( endpoint, headers, body, ids ) {
 		params.body = body;
 	}
 	return fetch( endpoint, params ).then( function ( r ) {
-		if ( r.status === 401 ) {
+		if ( r.status === 201 ) {
+			return [];
+		} else if ( r.status === 401 ) {
 		// If 404 assume was not a bad URL but bad single ID given to firefox
-			console.log( 'web-push-subscriber not setup correctly. Please check value of GCM_API_KEY.' );
+			console.log( 'web-push-subscriber not setup correctly. Please check value of GCM_API_KEY.', r );
 			return;
 		} else if ( [ 404, 400, 410 ].indexOf( r.status ) > -1 && ids.length === 1 ) {
 			stale.push( ids[0] );
@@ -105,7 +107,7 @@ function pingEndpoint( endpoint, headers, body, ids ) {
 				unsubscribe: stale
 			};
 		}
-		return r.json();
+		return ids.length > 1 ? r.json() : [];
 	} ).then( function ( json ) {
 		if ( json && json.results ) {
 			// Deal with bad subscriptions to Chrome
@@ -189,9 +191,9 @@ function getSubscribers( feature, provider ) {
  * @param {String} feature
  */
 function broadcast( feature ) {
-	// for backwards compatibility
-	broadcastForEndpoint( feature, '' );
+	console.log('Broadcast to Google');
 	broadcastForEndpoint( feature, 'google' );
+	console.log('Broadcast to FF');
 	broadcastForEndpoint( feature, 'firefox' );
 }
 
