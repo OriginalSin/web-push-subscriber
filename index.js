@@ -37,7 +37,7 @@ function ping( provider, ids, feature ) {
 	}
 
 	function doUnsubscriptions ( data ) {
-		if ( feature && data.unsubscribe ) {
+		if ( feature && data && data.unsubscribe ) {
 			data.unsubscribe.forEach( function ( subscription ) {
 				unsubscribe( provider, feature, subscription );
 			} );
@@ -95,8 +95,11 @@ function pingEndpoint( endpoint, headers, body, ids ) {
 		params.body = body;
 	}
 	return fetch( endpoint, params ).then( function ( r ) {
+		if ( r.status === 401 ) {
 		// If 404 assume was not a bad URL but bad single ID given to firefox
-		if ( [ 404, 400, 410 ].indexOf( r.status ) > -1 && ids.length === 1 ) {
+			console.log( 'web-push-subscriber not setup correctly. Please check value of GCM_API_KEY.' );
+			return;
+		} else if ( [ 404, 400, 410 ].indexOf( r.status ) > -1 && ids.length === 1 ) {
 			stale.push( ids[0] );
 			return {
 				unsubscribe: stale
@@ -115,6 +118,9 @@ function pingEndpoint( endpoint, headers, body, ids ) {
 		return {
 			unsubscribe: stale
 		};
+	} ).catch( function ( err ) {
+		console.log( 'Unhandled error in web-push-subscriber. Please report bug:', err,
+			endpoint, params );
 	} );
 }
 

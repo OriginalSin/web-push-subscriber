@@ -3,7 +3,7 @@
   "scripts": {
     "test": "grunt test && mocha tests/*"
   },
-  "version": "0.2.0",
+  "version": "0.2.2",
   "dependencies": {
     "level": "^1.4.0",
     "mydb": "^3.2.0",
